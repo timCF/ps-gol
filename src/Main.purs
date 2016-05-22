@@ -9,11 +9,14 @@ import Control.Monad.Eff.Random
 import Control.Monad.Eff.Console
 import DOM
 import Color
+import Color.Scale.Perceptual (inferno)
+import Control.Monad.Eff.Unsafe (unsafePerformEff)
+import DOM.File.FileList (length)
 import DOM.HTML (window)
 import DOM.HTML.HTMLCanvasElement (height)
 import DOM.HTML.Window (innerWidth, innerHeight)
 import DOM.RequestAnimationFrame (requestAnimationFrame)
-import Data.Array (zip, (..))
+import Data.Array (length, filter, index, zip, (..), mapMaybe)
 import Data.Foldable (fold)
 import Data.Tuple (Tuple(..))
 import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasWidth, setCanvasHeight, getCanvasDimensions)
@@ -21,12 +24,17 @@ import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasWidth, setC
 infixl 0 |>
 (|>) a b = b a
 
-setalpha color = let s = color |> toRGBA in rgba s.r s.g s.b 0.1
-cellsize = 50.0
-mincolor = 0x000000
-maxcolor = 0xffffff
+cellsize = 25.0
+colors = 8
+
 data Cell = Cell {state :: Int , x :: Number , y :: Number}
-newcell x y = randomInt mincolor maxcolor >>= \state -> return $ Cell {state: state, x: (toNumber x), y: (toNumber y)}
+
+makecolor state =
+	let hue = (toNumber state) * (360.0 / (toNumber colors))
+	in hsla hue 1.0 0.5 0.5
+
+-- need f**king unsafePerformEff here
+newcell x y = Cell {state: (randomInt 0 colors |> unsafePerformEff), x: (toNumber x), y: (toNumber y)}
 
 claimcells prevcells xn yn =
 	let prevyn = Data.Array.length prevcells
@@ -38,13 +46,21 @@ claimrow prevrow xn yindex =
 	let prevxn = Data.Array.length prevrow
 	in
 		if (prevxn >= xn) then Data.Array.take xn prevrow else Data.Array.concat [prevrow, (prevxn..xn |> map \x -> newcell x yindex)]
-evalcells prevcells = prevcells
+evaluate prevcells = prevcells |> map (\row -> row |> map (\el -> evalcell el prevcells))
+evalcell (Cell {state: state, x: xr, y: yr}) prevcells =
+	let
+		x = round xr
+		y = round yr
+		nextstate = (state + 1) `mod` colors
+		around = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]] |> mapMaybe (\[x,y] -> index prevcells y >>= \row -> index row x )
+		innext = around |> filter \(Cell {state: st}) -> st == nextstate
+	in
+		if (Data.Array.length(innext) == 0) then (Cell {state: state, x: xr, y: yr}) else (Cell {state: nextstate, x: xr, y: yr})
 
 drawcells newcells ctx = do
-	foreachE newcells \row -> foreachE row \cell -> do
-		Cell {state: state, x: x, y: y} <- cell
+	foreachE newcells \row -> foreachE row \(Cell {state: state, x: x, y: y}) -> do
 		rectangle (x * cellsize) (y * cellsize) cellsize cellsize
-			|> filled (state |> fromInt |> setalpha |> fillColor)
+			|> filled (state |> makecolor |> fillColor)
 			|> render ctx
 
 loop prevcells =
@@ -54,12 +70,10 @@ loop prevcells =
 		{width: this_width, height: this_heigth} <- getCanvasDimensions(canvas)
 		window >>= innerWidth >>= \n -> return (toNumber n) >>= \n -> if (n /= this_width) then setCanvasWidth n canvas else return canvas
 		window >>= innerHeight >>= \n -> return (toNumber n) >>= \n -> if (n /= this_heigth) then setCanvasHeight n canvas else return canvas
-		-- render background and meltdown effect
-		-- rectangle 0.0 0.0 this_width this_heigth |> filled (fillColor $ rgba 0 0 0 0.1) |> render ctx
-		newcells <- claimcells prevcells (round $ this_width / cellsize) ( round $ this_heigth / cellsize) |> evalcells |> return
+		newcells <- claimcells prevcells ((+) 1 $ round $ this_width / cellsize) ((+) 1 $ round $ this_heigth / cellsize) |> evaluate |> return
 		-- render new objects
 		drawcells newcells ctx
 		loop newcells
 
 main = do
-	loop [[(newcell 0 0)]]
+	loop []
