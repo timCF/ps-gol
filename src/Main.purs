@@ -1,23 +1,17 @@
 module Main where
 
 import Prelude
-import Data.Int
-import Data.Maybe
-import Control.Monad.Eff
-import Graphics.Drawing
-import Control.Monad.Eff.Random
-import Control.Monad.Eff.Console
-import DOM
-import Color
-import Color.Scale.Perceptual (inferno)
+import Data.Int (toNumber, round)
+import Data.Maybe (Maybe(..))
+import Control.Monad.Eff (foreachE)
+import Graphics.Drawing (rectangle, filled, render, fillColor)
+import Control.Monad.Eff.Random (randomInt)
+import Color (hsla)
 import Control.Monad.Eff.Unsafe (unsafePerformEff)
-import DOM.File.FileList (length)
 import DOM.HTML (window)
-import DOM.HTML.HTMLCanvasElement (height)
 import DOM.HTML.Window (innerWidth, innerHeight)
 import DOM.RequestAnimationFrame (requestAnimationFrame)
-import Data.Array (length, filter, index, zip, (..), mapMaybe)
-import Data.Foldable (fold)
+import Data.Array (filter, index, (..), mapMaybe)
 import Data.Tuple (Tuple(..))
 import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasWidth, setCanvasHeight, getCanvasDimensions)
 
