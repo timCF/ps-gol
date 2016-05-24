@@ -1,34 +1,28 @@
 module Main where
 
 import Prelude
+import Control.Monad.Eff (foreachE)
+import Data.Array ((..))
 import Data.Int (toNumber, round)
 import Data.Maybe (Maybe(..))
-import Control.Monad.Eff (foreachE)
-import Graphics.Drawing (rectangle, filled, render, fillColor)
-import Control.Monad.Eff.Random (randomInt)
-import Color (hsla)
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
-import DOM.HTML (window)
-import DOM.HTML.Window (innerWidth, innerHeight)
-import DOM.RequestAnimationFrame (requestAnimationFrame)
-import Data.Array (filter, index, (..), mapMaybe)
 import Data.Tuple (Tuple(..))
-import Graphics.Canvas (getCanvasElementById, getContext2D, setCanvasWidth, setCanvasHeight, getCanvasDimensions)
 
 infixl 0 |>
-(|>) a b = b a
+(|>) a b = b $ a
 
 cellsize = 25.0
 colors = 8
 
 data Cell = Cell {state :: Int , x :: Number , y :: Number}
 
+
 makecolor state =
 	let hue = (toNumber state) * (360.0 / (toNumber colors))
-	in hsla hue 1.0 0.5 0.5
+	in Color.hsla hue 1.0 0.5 0.5 |> Color.cssStringRGBA
 
 -- need f**king unsafePerformEff here
-newcell x y = Cell {state: (randomInt 0 colors |> unsafePerformEff), x: (toNumber x), y: (toNumber y)}
+newcell x y = Cell {state: (Control.Monad.Eff.Random.randomInt 0 colors |> Control.Monad.Eff.Unsafe.unsafePerformEff), x: (toNumber x), y: (toNumber y)}
+
 
 claimcells prevcells xn yn =
 	let prevyn = Data.Array.length prevcells
@@ -40,34 +34,54 @@ claimrow prevrow xn yindex =
 	let prevxn = Data.Array.length prevrow
 	in
 		if (prevxn >= xn) then Data.Array.take xn prevrow else Data.Array.concat [prevrow, (prevxn..xn |> map \x -> newcell x yindex)]
+
+
 evaluate prevcells = prevcells |> map (\row -> row |> map (\el -> evalcell el prevcells))
 evalcell (Cell {state: state, x: xr, y: yr}) prevcells =
 	let
 		x = round xr
 		y = round yr
 		nextstate = (state + 1) `mod` colors
-		around = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]] |> mapMaybe (\[x,y] -> index prevcells y >>= \row -> index row x )
-		innext = around |> filter \(Cell {state: st}) -> st == nextstate
+		around = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]] |> Data.Array.mapMaybe (\[x,y] -> Data.Array.index prevcells y >>= \row -> Data.Array.index row x )
+		innext = around |> Data.Array.filter \(Cell {state: st}) -> st == nextstate
 	in
 		if (Data.Array.length(innext) == 0) then (Cell {state: state, x: xr, y: yr}) else (Cell {state: nextstate, x: xr, y: yr})
 
-drawcells newcells ctx = do
-	foreachE newcells \row -> foreachE row \(Cell {state: state, x: x, y: y}) -> do
-		rectangle (x * cellsize) (y * cellsize) cellsize cellsize
-			|> filled (state |> makecolor |> fillColor)
-			|> render ctx
 
-loop prevcells =
-	requestAnimationFrame do
-		Just canvas <- getCanvasElementById "canvas"
-		ctx <- getContext2D canvas
-		{width: this_width, height: this_heigth} <- getCanvasDimensions(canvas)
-		window >>= innerWidth >>= \n -> return (toNumber n) >>= \n -> if (n /= this_width) then setCanvasWidth n canvas else return canvas
-		window >>= innerHeight >>= \n -> return (toNumber n) >>= \n -> if (n /= this_heigth) then setCanvasHeight n canvas else return canvas
+diffcells prevcells newcells =
+	let filterpred xn yn sn = do
+			case Data.Array.index prevcells (round yn) >>= \row -> Data.Array.index row (round xn) of
+				Nothing -> true
+				Just (Cell {x: xp, y: yp, state: sp}) -> not((xp == xn) && (yp == yn) && (sp == sn))
+	in
+		newcells |> Data.Array.concat |> Data.Array.filter \(Cell {x: xn, y: yn, state: sn}) -> filterpred xn yn sn
+
+
+drawcells ctx newcells =
+	let groupedcells = newcells |> Data.Array.groupBy (\(Cell {state: s1}) (Cell {state: s2}) -> s1 == s2)
+	in
+		foreachE groupedcells \thisgroup -> do
+			case (Data.Array.head thisgroup >>= \(Cell {state: state}) -> makecolor state |> return) of
+				Nothing -> return unit
+				Just color -> do
+					coloredctx <- Graphics.Canvas.setFillStyle color ctx
+					foreachE thisgroup \(Cell {x: x, y: y}) -> do
+						Graphics.Canvas.fillRect coloredctx { x:  (x * cellsize), y: (y * cellsize), w: cellsize, h: cellsize }
+						return unit
+
+
+loop prevcells canvas ctx =
+	DOM.RequestAnimationFrame.requestAnimationFrame do
+		{width: this_width, height: this_heigth} <- Graphics.Canvas.getCanvasDimensions(canvas)
+		DOM.HTML.window >>= DOM.HTML.Window.innerWidth >>= \n -> return (toNumber n) >>= \n -> if (n /= this_width) then Graphics.Canvas.setCanvasWidth n canvas else return canvas
+		DOM.HTML.window >>= DOM.HTML.Window.innerHeight >>= \n -> return (toNumber n) >>= \n -> if (n /= this_heigth) then Graphics.Canvas.setCanvasHeight n canvas else return canvas
 		newcells <- claimcells prevcells ((+) 1 $ round $ this_width / cellsize) ((+) 1 $ round $ this_heigth / cellsize) |> evaluate |> return
 		-- render new objects
-		drawcells newcells ctx
-		loop newcells
+		newcells |> diffcells prevcells |> drawcells ctx
+		loop newcells canvas ctx
+
 
 main = do
-	loop []
+	Just canvas <- Graphics.Canvas.getCanvasElementById "canvas"
+	ctx <- Graphics.Canvas.getContext2D canvas
+	loop [] canvas ctx
