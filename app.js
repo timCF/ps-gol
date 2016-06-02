@@ -32,14 +32,6 @@ var PS = {};
     };
   };
 
-  //- Monoid ---------------------------------------------------------------------
-
-  exports.concatString = function (s1) {
-    return function (s2) {
-      return s1 + s2;
-    };
-  };
-
   //- Eq -------------------------------------------------------------------------
 
   exports.refEq = function (r1) {
@@ -103,13 +95,6 @@ var PS = {};
       EQ.value = new EQ();
       return EQ;
   })();
-  var Semigroupoid = function (compose) {
-      this.compose = compose;
-  };
-  var Category = function (__superclass_Prelude$dotSemigroupoid_0, id) {
-      this["__superclass_Prelude.Semigroupoid_0"] = __superclass_Prelude$dotSemigroupoid_0;
-      this.id = id;
-  };
   var Functor = function (map) {
       this.map = map;
   };
@@ -128,9 +113,6 @@ var PS = {};
   var Monad = function (__superclass_Prelude$dotApplicative_0, __superclass_Prelude$dotBind_1) {
       this["__superclass_Prelude.Applicative_0"] = __superclass_Prelude$dotApplicative_0;
       this["__superclass_Prelude.Bind_1"] = __superclass_Prelude$dotBind_1;
-  };
-  var Semigroup = function (append) {
-      this.append = append;
   };
   var Eq = function (eq) {
       this.eq = eq;
@@ -155,15 +137,7 @@ var PS = {};
   var showInt = new Show($foreign.showIntImpl);
   var show = function (dict) {
       return dict.show;
-  };                                                                     
-  var semigroupoidFn = new Semigroupoid(function (f) {
-      return function (g) {
-          return function (x) {
-              return f(g(x));
-          };
-      };
-  });
-  var semigroupString = new Semigroup($foreign.concatString);
+  };                  
   var pure = function (dict) {
       return dict.pure;
   };
@@ -176,9 +150,6 @@ var PS = {};
   };
   var $less$dollar$greater = function (dictFunctor) {
       return map(dictFunctor);
-  };
-  var id = function (dict) {
-      return dict.id;
   };
   var functorArray = new Functor($foreign.arrayMap);
   var flip = function (f) {
@@ -200,22 +171,9 @@ var PS = {};
           return a;
       };
   };
-  var $$void = function (dictFunctor) {
-      return function (fa) {
-          return $less$dollar$greater(dictFunctor)($$const(unit))(fa);
-      };
-  };
-  var compose = function (dict) {
-      return dict.compose;
-  };
   var compare = function (dict) {
       return dict.compare;
-  };
-  var categoryFn = new Category(function () {
-      return semigroupoidFn;
-  }, function (x) {
-      return x;
-  });
+  }; 
   var boundedInt = new Bounded($foreign.bottomInt, $foreign.topInt);
   var bottom = function (dict) {
       return dict.bottom;
@@ -238,12 +196,6 @@ var PS = {};
               return $less$times$greater(dictApplicative["__superclass_Prelude.Apply_0"]())(pure(dictApplicative)(f))(a);
           };
       };
-  }; 
-  var append = function (dict) {
-      return dict.append;
-  };
-  var $less$greater = function (dictSemigroup) {
-      return append(dictSemigroup);
   };
   var ap = function (dictMonad) {
       return function (f) {
@@ -279,47 +231,35 @@ var PS = {};
   exports["Bounded"] = Bounded;
   exports["Ord"] = Ord;
   exports["Eq"] = Eq;
-  exports["Semigroup"] = Semigroup;
   exports["Monad"] = Monad;
   exports["Bind"] = Bind;
   exports["Applicative"] = Applicative;
   exports["Apply"] = Apply;
   exports["Functor"] = Functor;
-  exports["Category"] = Category;
-  exports["Semigroupoid"] = Semigroupoid;
   exports["show"] = show;
   exports["bottom"] = bottom;
   exports["top"] = top;
   exports["unsafeCompare"] = unsafeCompare;
   exports["compare"] = compare;
   exports["eq"] = eq;
-  exports["<>"] = $less$greater;
-  exports["append"] = append;
   exports["ap"] = ap;
   exports["return"] = $$return;
   exports[">>="] = $greater$greater$eq;
   exports["bind"] = bind;
   exports["liftA1"] = liftA1;
   exports["pure"] = pure;
-  exports["<*>"] = $less$times$greater;
   exports["apply"] = apply;
-  exports["void"] = $$void;
   exports["<$>"] = $less$dollar$greater;
   exports["map"] = map;
-  exports["id"] = id;
-  exports["compose"] = compose;
   exports["otherwise"] = otherwise;
   exports["const"] = $$const;
   exports["flip"] = flip;
   exports["unit"] = unit;
-  exports["semigroupoidFn"] = semigroupoidFn;
-  exports["categoryFn"] = categoryFn;
   exports["functorArray"] = functorArray;
   exports["applyArray"] = applyArray;
   exports["applicativeArray"] = applicativeArray;
   exports["bindArray"] = bindArray;
   exports["monadArray"] = monadArray;
-  exports["semigroupString"] = semigroupString;
   exports["eqNumber"] = eqNumber;
   exports["ordNumber"] = ordNumber;
   exports["boundedInt"] = boundedInt;
@@ -357,6 +297,28 @@ var PS = {};
   };
 
   //------------------------------------------------------------------------------
+  // Extending arrays ------------------------------------------------------------
+  //------------------------------------------------------------------------------
+
+  exports.cons = function (e) {
+    return function (l) {
+      return [e].concat(l);
+    };
+  };
+
+  //------------------------------------------------------------------------------
+  // Non-indexed reads -----------------------------------------------------------
+  //------------------------------------------------------------------------------
+
+  exports["uncons'"] = function (empty) {
+    return function (next) {
+      return function (xs) {
+        return xs.length === 0 ? empty({}) : next(xs[0])(xs.slice(1));
+      };
+    };
+  };
+
+  //------------------------------------------------------------------------------
   // Indexed operations ----------------------------------------------------------
   //------------------------------------------------------------------------------
 
@@ -368,6 +330,14 @@ var PS = {};
         };
       };
     };
+  };
+
+  //------------------------------------------------------------------------------
+  // Transformations -------------------------------------------------------------
+  //------------------------------------------------------------------------------
+
+  exports.reverse = function (l) {
+    return l.slice().reverse();
   };
 
   exports.concat = function (xss) {
@@ -416,69 +386,6 @@ var PS = {};
     };
   };
 })(PS["Data.Array"] = PS["Data.Array"] || {});
-(function(exports) {
-  /* global exports */
-  "use strict";
-
-  // module Data.Foldable
-
-  exports.foldrArray = function (f) {
-    return function (init) {
-      return function (xs) {
-        var acc = init;
-        var len = xs.length;
-        for (var i = len - 1; i >= 0; i--) {
-          acc = f(xs[i])(acc);
-        }
-        return acc;
-      };
-    };
-  };
-
-  exports.foldlArray = function (f) {
-    return function (init) {
-      return function (xs) {
-        var acc = init;
-        var len = xs.length;
-        for (var i = 0; i < len; i++) {
-          acc = f(acc)(xs[i]);
-        }
-        return acc;
-      };
-    };
-  };
-})(PS["Data.Foldable"] = PS["Data.Foldable"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var $times$greater = function (dictApply) {
-      return function (a) {
-          return function (b) {
-              return Prelude["<*>"](dictApply)(Prelude["<$>"](dictApply["__superclass_Prelude.Functor_0"]())(Prelude["const"](Prelude.id(Prelude.categoryFn)))(a))(b);
-          };
-      };
-  };
-  exports["*>"] = $times$greater;
-})(PS["Control.Apply"] = PS["Control.Apply"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];        
-  var Monoid = function (__superclass_Prelude$dotSemigroup_0, mempty) {
-      this["__superclass_Prelude.Semigroup_0"] = __superclass_Prelude$dotSemigroup_0;
-      this.mempty = mempty;
-  };               
-  var monoidString = new Monoid(function () {
-      return Prelude.semigroupString;
-  }, "");  
-  var mempty = function (dict) {
-      return dict.mempty;
-  };
-  exports["Monoid"] = Monoid;
-  exports["mempty"] = mempty;
-  exports["monoidString"] = monoidString;
-})(PS["Data.Monoid"] = PS["Data.Monoid"] || {});
 (function(exports) {
   // Generated by psc version 0.8.5.0
   "use strict";
@@ -553,153 +460,17 @@ var PS = {};
           throw new Error("Failed pattern match at Data.Maybe line 181, column 3 - line 182, column 3: " + [ v.constructor.name, v1.constructor.name ]);
       };
   });
+  var applicativeMaybe = new Prelude.Applicative(function () {
+      return applyMaybe;
+  }, Just.create);
   exports["Nothing"] = Nothing;
   exports["Just"] = Just;
   exports["maybe"] = maybe;
   exports["functorMaybe"] = functorMaybe;
   exports["applyMaybe"] = applyMaybe;
+  exports["applicativeMaybe"] = applicativeMaybe;
   exports["bindMaybe"] = bindMaybe;
 })(PS["Data.Maybe"] = PS["Data.Maybe"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var $foreign = PS["Data.Foldable"];
-  var Prelude = PS["Prelude"];
-  var Control_Apply = PS["Control.Apply"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Maybe_First = PS["Data.Maybe.First"];
-  var Data_Maybe_Last = PS["Data.Maybe.Last"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Data_Monoid_Additive = PS["Data.Monoid.Additive"];
-  var Data_Monoid_Conj = PS["Data.Monoid.Conj"];
-  var Data_Monoid_Disj = PS["Data.Monoid.Disj"];
-  var Data_Monoid_Dual = PS["Data.Monoid.Dual"];
-  var Data_Monoid_Endo = PS["Data.Monoid.Endo"];
-  var Data_Monoid_Multiplicative = PS["Data.Monoid.Multiplicative"];        
-  var Foldable = function (foldMap, foldl, foldr) {
-      this.foldMap = foldMap;
-      this.foldl = foldl;
-      this.foldr = foldr;
-  };
-  var foldr = function (dict) {
-      return dict.foldr;
-  };
-  var traverse_ = function (dictApplicative) {
-      return function (dictFoldable) {
-          return function (f) {
-              return foldr(dictFoldable)(function ($161) {
-                  return Control_Apply["*>"](dictApplicative["__superclass_Prelude.Apply_0"]())(f($161));
-              })(Prelude.pure(dictApplicative)(Prelude.unit));
-          };
-      };
-  };
-  var for_ = function (dictApplicative) {
-      return function (dictFoldable) {
-          return Prelude.flip(traverse_(dictApplicative)(dictFoldable));
-      };
-  };
-  var foldl = function (dict) {
-      return dict.foldl;
-  };
-  var intercalate = function (dictFoldable) {
-      return function (dictMonoid) {
-          return function (sep) {
-              return function (xs) {
-                  var go = function (v) {
-                      return function (x) {
-                          if (v.init) {
-                              return {
-                                  init: false, 
-                                  acc: x
-                              };
-                          };
-                          return {
-                              init: false, 
-                              acc: Prelude["<>"](dictMonoid["__superclass_Prelude.Semigroup_0"]())(v.acc)(Prelude["<>"](dictMonoid["__superclass_Prelude.Semigroup_0"]())(sep)(x))
-                          };
-                      };
-                  };
-                  return (foldl(dictFoldable)(go)({
-                      init: true, 
-                      acc: Data_Monoid.mempty(dictMonoid)
-                  })(xs)).acc;
-              };
-          };
-      };
-  }; 
-  var foldableMaybe = new Foldable(function (dictMonoid) {
-      return function (f) {
-          return function (v) {
-              if (v instanceof Data_Maybe.Nothing) {
-                  return Data_Monoid.mempty(dictMonoid);
-              };
-              if (v instanceof Data_Maybe.Just) {
-                  return f(v.value0);
-              };
-              throw new Error("Failed pattern match at Data.Foldable line 108, column 3 - line 109, column 3: " + [ f.constructor.name, v.constructor.name ]);
-          };
-      };
-  }, function (v) {
-      return function (z) {
-          return function (v1) {
-              if (v1 instanceof Data_Maybe.Nothing) {
-                  return z;
-              };
-              if (v1 instanceof Data_Maybe.Just) {
-                  return v(z)(v1.value0);
-              };
-              throw new Error("Failed pattern match at Data.Foldable line 106, column 3 - line 107, column 3: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
-          };
-      };
-  }, function (v) {
-      return function (z) {
-          return function (v1) {
-              if (v1 instanceof Data_Maybe.Nothing) {
-                  return z;
-              };
-              if (v1 instanceof Data_Maybe.Just) {
-                  return v(v1.value0)(z);
-              };
-              throw new Error("Failed pattern match at Data.Foldable line 104, column 3 - line 105, column 3: " + [ v.constructor.name, z.constructor.name, v1.constructor.name ]);
-          };
-      };
-  });
-  var foldMapDefaultR = function (dictFoldable) {
-      return function (dictMonoid) {
-          return function (f) {
-              return function (xs) {
-                  return foldr(dictFoldable)(function (x) {
-                      return function (acc) {
-                          return Prelude["<>"](dictMonoid["__superclass_Prelude.Semigroup_0"]())(f(x))(acc);
-                      };
-                  })(Data_Monoid.mempty(dictMonoid))(xs);
-              };
-          };
-      };
-  };
-  var foldableArray = new Foldable(function (dictMonoid) {
-      return foldMapDefaultR(foldableArray)(dictMonoid);
-  }, $foreign.foldlArray, $foreign.foldrArray);
-  var foldMap = function (dict) {
-      return dict.foldMap;
-  };
-  var fold = function (dictFoldable) {
-      return function (dictMonoid) {
-          return foldMap(dictFoldable)(dictMonoid)(Prelude.id(Prelude.categoryFn));
-      };
-  };
-  exports["Foldable"] = Foldable;
-  exports["intercalate"] = intercalate;
-  exports["for_"] = for_;
-  exports["traverse_"] = traverse_;
-  exports["fold"] = fold;
-  exports["foldMapDefaultR"] = foldMapDefaultR;
-  exports["foldMap"] = foldMap;
-  exports["foldl"] = foldl;
-  exports["foldr"] = foldr;
-  exports["foldableArray"] = foldableArray;
-  exports["foldableMaybe"] = foldableMaybe;
-})(PS["Data.Foldable"] = PS["Data.Foldable"] || {});
 (function(exports) {
   // Generated by psc version 0.8.5.0
   "use strict";
@@ -775,14 +546,90 @@ var PS = {};
   var Data_Monoid = PS["Data.Monoid"];
   var Data_Traversable = PS["Data.Traversable"];
   var Data_Tuple = PS["Data.Tuple"];
-  var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];
+  var Data_Maybe_Unsafe = PS["Data.Maybe.Unsafe"];        
+  var $colon = $foreign.cons;
   var $dot$dot = $foreign.range;
   var zip = $foreign.zipWith(Data_Tuple.Tuple.create);
+  var uncons = $foreign["uncons'"](Prelude["const"](Data_Maybe.Nothing.value))(function (x) {
+      return function (xs) {
+          return new Data_Maybe.Just({
+              head: x, 
+              tail: xs
+          });
+      };
+  });
   var take = $foreign.slice(0);
+  var tail = $foreign["uncons'"](Prelude["const"](Data_Maybe.Nothing.value))(function (v) {
+      return function (xs) {
+          return new Data_Maybe.Just(xs);
+      };
+  });
+  var span = function (p) {
+      var go = function (__copy_acc) {
+          return function (__copy_xs) {
+              var acc = __copy_acc;
+              var xs = __copy_xs;
+              tco: while (true) {
+                  var $42 = uncons(xs);
+                  if ($42 instanceof Data_Maybe.Just && p($42.value0.head)) {
+                      var __tco_acc = $colon($42.value0.head)(acc);
+                      acc = __tco_acc;
+                      xs = $42.value0.tail;
+                      continue tco;
+                  };
+                  return {
+                      init: $foreign.reverse(acc), 
+                      rest: xs
+                  };
+              };
+          };
+      };
+      return go([  ]);
+  };
   var singleton = function (a) {
       return [ a ];
   };
+  var $$null = function (xs) {
+      return $foreign.length(xs) === 0;
+  };                                                                                  
+  var init = function (xs) {
+      if ($$null(xs)) {
+          return Data_Maybe.Nothing.value;
+      };
+      if (Prelude.otherwise) {
+          return new Data_Maybe.Just($foreign.slice(0)($foreign.length(xs) - 1)(xs));
+      };
+      throw new Error("Failed pattern match at Data.Array line 228, column 1 - line 245, column 1: " + [ xs.constructor.name ]);
+  };
   var index = $foreign.indexImpl(Data_Maybe.Just.create)(Data_Maybe.Nothing.value);
+  var head = $foreign["uncons'"](Prelude["const"](Data_Maybe.Nothing.value))(function (x) {
+      return function (v) {
+          return new Data_Maybe.Just(x);
+      };
+  });
+  var groupBy = function (op) {
+      var go = function (__copy_acc) {
+          return function (__copy_xs) {
+              var acc = __copy_acc;
+              var xs = __copy_xs;
+              tco: while (true) {
+                  var $54 = uncons(xs);
+                  if ($54 instanceof Data_Maybe.Just) {
+                      var sp = span(op($54.value0.head))($54.value0.tail);
+                      var __tco_acc = $colon($colon($54.value0.head)(sp.init))(acc);
+                      acc = __tco_acc;
+                      xs = sp.rest;
+                      continue tco;
+                  };
+                  if ($54 instanceof Data_Maybe.Nothing) {
+                      return $foreign.reverse(acc);
+                  };
+                  throw new Error("Failed pattern match at Data.Array line 488, column 15 - line 494, column 1: " + [ $54.constructor.name ]);
+              };
+          };
+      };
+      return go([  ]);
+  };
   var concatMap = Prelude.flip(Prelude.bind(Prelude.bindArray));
   var mapMaybe = function (f) {
       return concatMap(function ($69) {
@@ -790,10 +637,16 @@ var PS = {};
       });
   };
   exports["zip"] = zip;
+  exports["groupBy"] = groupBy;
+  exports["span"] = span;
   exports["take"] = take;
   exports["mapMaybe"] = mapMaybe;
   exports["concatMap"] = concatMap;
   exports["index"] = index;
+  exports["uncons"] = uncons;
+  exports["init"] = init;
+  exports["tail"] = tail;
+  exports["head"] = head;
   exports[".."] = $dot$dot;
   exports["singleton"] = singleton;
   exports["filter"] = $foreign.filter;
@@ -821,7 +674,11 @@ var PS = {};
 })(PS["Data.Int"] = PS["Data.Int"] || {});
 (function(exports) {
   /* global exports */
-  "use strict";          
+  "use strict";
+
+  // module Math
+
+  exports.abs = Math.abs;
 
   exports.floor = Math.floor;
 
@@ -831,18 +688,16 @@ var PS = {};
     };
   };
 
-  exports.round = Math.round;  
-
-  exports.pi = Math.PI;
+  exports.round = Math.round;
 })(PS["Math"] = PS["Math"] || {});
 (function(exports) {
   // Generated by psc version 0.8.5.0
   "use strict";
   var $foreign = PS["Math"];
-  exports["pi"] = $foreign.pi;
   exports["%"] = $foreign["%"];
   exports["round"] = $foreign.round;
   exports["floor"] = $foreign.floor;
+  exports["abs"] = $foreign.abs;
 })(PS["Math"] = PS["Math"] || {});
 (function(exports) {
   // Generated by psc version 0.8.5.0
@@ -964,6 +819,75 @@ var PS = {};
       };
       return HSLA;
   })();
+  var toRGBA$prime = function (v) {
+      var h$prime = v.value0 / 60.0;
+      var chr = (1.0 - $$Math.abs(2.0 * v.value2 - 1.0)) * v.value1;
+      var m = v.value2 - chr / 2.0;
+      var x = chr * (1.0 - $$Math.abs($$Math["%"](h$prime)(2.0) - 1.0));
+      var col = (function () {
+          if (h$prime < 1.0) {
+              return {
+                  r: chr, 
+                  g: x, 
+                  b: 0.0
+              };
+          };
+          if (1.0 <= h$prime && h$prime < 2.0) {
+              return {
+                  r: x, 
+                  g: chr, 
+                  b: 0.0
+              };
+          };
+          if (2.0 <= h$prime && h$prime < 3.0) {
+              return {
+                  r: 0.0, 
+                  g: chr, 
+                  b: x
+              };
+          };
+          if (3.0 <= h$prime && h$prime < 4.0) {
+              return {
+                  r: 0.0, 
+                  g: x, 
+                  b: chr
+              };
+          };
+          if (4.0 <= h$prime && h$prime < 5.0) {
+              return {
+                  r: x, 
+                  g: 0.0, 
+                  b: chr
+              };
+          };
+          if (Prelude.otherwise) {
+              return {
+                  r: chr, 
+                  g: 0.0, 
+                  b: x
+              };
+          };
+          throw new Error("Failed pattern match at Color line 295, column 1 - line 313, column 1: " + [  ]);
+      })();
+      return {
+          r: col.r + m, 
+          g: col.g + m, 
+          b: col.b + m, 
+          a: v.value3
+      };
+  };
+  var toRGBA = function (v) {
+      var c = toRGBA$prime(v);
+      var g = Data_Int.round(255.0 * c.g);
+      var r = Data_Int.round(255.0 * c.r);
+      var b = Data_Int.round(255.0 * c.b);
+      return {
+          r: r, 
+          g: g, 
+          b: b, 
+          a: v.value3
+      };
+  }; 
   var modPos = function (x) {
       return function (y) {
           return $$Math["%"]($$Math["%"](x)(y) + y)(y);
@@ -982,45 +906,25 @@ var PS = {};
           };
       };
   };
-  var cssStringHSLA = function (v) {
-      var toString = function (n) {
-          return Prelude.show(Prelude.showNumber)(Data_Int.toNumber(Data_Int.round(100.0 * n)) / 100.0);
+  var cssStringRGBA = function (col) {
+      var c = toRGBA(col);
+      var green = Prelude.show(Prelude.showInt)(c.g);
+      var red = Prelude.show(Prelude.showInt)(c.r);
+      var blue = Prelude.show(Prelude.showInt)(c.b);
+      var alpha = Prelude.show(Prelude.showNumber)(c.a);
+      var $66 = c.a === 1.0;
+      if ($66) {
+          return "rgb(" + (red + (", " + (green + (", " + (blue + ")")))));
       };
-      var saturation = toString(v.value1 * 100.0) + "%";
-      var lightness = toString(v.value2 * 100.0) + "%";
-      var hue = toString(v.value0);
-      var alpha = Prelude.show(Prelude.showNumber)(v.value3);
-      var $68 = v.value3 === 1.0;
-      if ($68) {
-          return "hsl(" + (hue + (", " + (saturation + (", " + (lightness + ")")))));
+      if (!$66) {
+          return "rgba(" + (red + (", " + (green + (", " + (blue + (", " + (alpha + ")")))))));
       };
-      if (!$68) {
-          return "hsla(" + (hue + (", " + (saturation + (", " + (lightness + (", " + (alpha + ")")))))));
-      };
-      throw new Error("Failed pattern match at Color line 376, column 3 - line 380, column 3: " + [ $68.constructor.name ]);
+      throw new Error("Failed pattern match at Color line 390, column 3 - line 394, column 3: " + [ $66.constructor.name ]);
   };
-  exports["cssStringHSLA"] = cssStringHSLA;
+  exports["cssStringRGBA"] = cssStringRGBA;
+  exports["toRGBA"] = toRGBA;
   exports["hsla"] = hsla;
 })(PS["Color"] = PS["Color"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];        
-  var when = function (dictMonad) {
-      return function (v) {
-          return function (v1) {
-              if (v) {
-                  return v1;
-              };
-              if (!v) {
-                  return Prelude["return"](dictMonad["__superclass_Prelude.Applicative_0"]())(Prelude.unit);
-              };
-              throw new Error("Failed pattern match at Control.Monad line 9, column 1 - line 10, column 1: " + [ v.constructor.name, v1.constructor.name ]);
-          };
-      };
-  };
-  exports["when"] = when;
-})(PS["Control.Monad"] = PS["Control.Monad"] || {});
 (function(exports) {
   /* global exports */
   "use strict";
@@ -1220,91 +1124,6 @@ var PS = {};
   exports["requestAnimationFrame"] = requestAnimationFrame;
 })(PS["DOM.RequestAnimationFrame"] = PS["DOM.RequestAnimationFrame"] || {});
 (function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Control_Alt = PS["Control.Alt"];
-  var Control_Alternative = PS["Control.Alternative"];
-  var Control_Lazy = PS["Control.Lazy"];
-  var Control_MonadPlus = PS["Control.MonadPlus"];
-  var Control_Plus = PS["Control.Plus"];
-  var Data_Foldable = PS["Data.Foldable"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Data_Traversable = PS["Data.Traversable"];
-  var Data_Tuple = PS["Data.Tuple"];
-  var Data_Unfoldable = PS["Data.Unfoldable"];        
-  var Nil = (function () {
-      function Nil() {
-
-      };
-      Nil.value = new Nil();
-      return Nil;
-  })();
-  var Cons = (function () {
-      function Cons(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Cons.create = function (value0) {
-          return function (value1) {
-              return new Cons(value0, value1);
-          };
-      };
-      return Cons;
-  })();
-  var foldableList = new Data_Foldable.Foldable(function (dictMonoid) {
-      return function (f) {
-          return Data_Foldable.foldl(foldableList)(function (acc) {
-              return function ($374) {
-                  return Prelude.append(dictMonoid["__superclass_Prelude.Semigroup_0"]())(acc)(f($374));
-              };
-          })(Data_Monoid.mempty(dictMonoid));
-      };
-  }, (function () {
-      var go = function (__copy_v) {
-          return function (__copy_b) {
-              return function (__copy_v1) {
-                  var v = __copy_v;
-                  var b = __copy_b;
-                  var v1 = __copy_v1;
-                  tco: while (true) {
-                      if (v1 instanceof Nil) {
-                          return b;
-                      };
-                      if (v1 instanceof Cons) {
-                          var __tco_v = v;
-                          var __tco_b = v(b)(v1.value0);
-                          var __tco_v1 = v1.value1;
-                          v = __tco_v;
-                          b = __tco_b;
-                          v1 = __tco_v1;
-                          continue tco;
-                      };
-                      throw new Error("Failed pattern match at Data.List line 767, column 3 - line 771, column 3: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
-                  };
-              };
-          };
-      };
-      return go;
-  })(), function (v) {
-      return function (b) {
-          return function (v1) {
-              if (v1 instanceof Nil) {
-                  return b;
-              };
-              if (v1 instanceof Cons) {
-                  return v(v1.value0)(Data_Foldable.foldr(foldableList)(v)(b)(v1.value1));
-              };
-              throw new Error("Failed pattern match at Data.List line 765, column 3 - line 766, column 3: " + [ v.constructor.name, b.constructor.name, v1.constructor.name ]);
-          };
-      };
-  });
-  exports["Nil"] = Nil;
-  exports["Cons"] = Cons;
-  exports["foldableList"] = foldableList;
-})(PS["Data.List"] = PS["Data.List"] || {});
-(function(exports) {
   /* global exports */
   "use strict";
 
@@ -1355,15 +1174,6 @@ var PS = {};
       };
   };
 
-  exports.setLineWidth = function(width) {
-      return function(ctx) {
-          return function() {
-              ctx.lineWidth = width;
-              return ctx;
-          };
-      };
-  };
-
   exports.setFillStyle = function(style) {
       return function(ctx) {
           return function() {
@@ -1373,192 +1183,12 @@ var PS = {};
       };
   };
 
-  exports.setStrokeStyle = function(style) {
-      return function(ctx) {
-          return function() {
-              ctx.strokeStyle = style;
-              return ctx;
-          };
-      };
-  };
-
-  exports.setShadowColor = function(color) {
-      return function(ctx) {
-          return function() {
-              ctx.shadowColor = color;
-              return ctx;
-          };
-      };
-  };
-
-  exports.setShadowBlur = function(blur) {
-      return function(ctx) {
-          return function() {
-              ctx.shadowBlur = blur;
-              return ctx;
-          };
-      };
-  };
-
-  exports.setShadowOffsetX = function(offsetX) {
-      return function(ctx) {
-          return function() {
-              ctx.shadowOffsetX = offsetX;
-              return ctx;
-          };
-      };
-  };
-
-  exports.setShadowOffsetY = function(offsetY) {
-      return function(ctx) {
-          return function() {
-              ctx.shadowOffsetY = offsetY;
-              return ctx;
-          };
-      };
-  };
-
-  exports.beginPath = function(ctx) {
-      return function() {
-          ctx.beginPath();
-          return ctx;
-      };
-  };
-
-  exports.stroke = function(ctx) {
-      return function() {
-          ctx.stroke();
-          return ctx;
-      };
-  };
-
-  exports.fill = function(ctx) {
-      return function() {
-          ctx.fill();
-          return ctx;
-      };
-  };
-
-  exports.clip = function(ctx) {
-      return function() {
-          ctx.clip();
-          return ctx;
-      };
-  };
-
-  exports.lineTo = function(ctx) {
-      return function(x) {
-          return function(y) {
-              return function() {
-                  ctx.lineTo(x, y);
-                  return ctx;
-              };
-          };
-      };
-  };
-
-  exports.moveTo = function(ctx) {
-      return function(x) {
-          return function(y) {
-              return function() {
-                  ctx.moveTo(x, y);
-                  return ctx;
-              };
-          };
-      };
-  };
-
-  exports.closePath = function(ctx) {
-      return function() {
-          ctx.closePath();
-          return ctx;
-      };
-  };
-
-  exports.arc = function(ctx) {
-      return function(a) {
-          return function() {
-              ctx.arc(a.x, a.y, a.r, a.start, a.end);
-              return ctx;
-          };
-      };
-  };
-
-  exports.rect = function(ctx) {
+  exports.fillRect = function(ctx) {
       return function(r) {
           return function() {
-              ctx.rect(r.x, r.y, r.w, r.h);
+              ctx.fillRect(r.x, r.y, r.w, r.h);
               return ctx;
           };
-      };
-  };
-
-  exports.scale = function(t) {
-      return function(ctx) {
-          return function() {
-              ctx.scale(t.scaleX, t.scaleY);
-              return ctx;
-          };
-      };
-  };
-
-  exports.rotate = function(angle) {
-      return function(ctx) {
-          return function() {
-              ctx.rotate(angle);
-              return ctx;
-          };
-      };
-  };
-
-  exports.translate = function(t) {
-      return function(ctx) {
-          return function() {
-              ctx.translate(t.translateX, t.translateY);
-              return ctx;
-          };
-      };
-  };
-
-  exports.font = function(ctx) {
-      return function() {
-          return ctx.font;
-      };
-  };
-
-  exports.setFont = function(fontspec) {
-      return function(ctx) {
-          return function() {
-              ctx.font = fontspec;
-              return ctx;
-          };
-      };
-  };
-
-  exports.fillText = function(ctx) {
-      return function(text) {
-          return function(x) {
-              return function(y) {
-                  return function() {
-                      ctx.fillText(text, x, y);
-                      return ctx;
-                  };
-              };
-          };
-      };
-  };
-
-  exports.save = function(ctx) {
-      return function() {
-          ctx.save();
-          return ctx;
-      };
-  };
-
-  exports.restore = function(ctx) {
-      return function() {
-          ctx.restore();
-          return ctx;
       };
   };
 })(PS["Graphics.Canvas"] = PS["Graphics.Canvas"] || {});
@@ -1572,26 +1202,6 @@ var PS = {};
   var Data_Maybe = PS["Data.Maybe"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];
   var Control_Monad_Eff_Exception_Unsafe = PS["Control.Monad.Eff.Exception.Unsafe"];
-  var withContext = function (ctx) {
-      return function (action) {
-          return function __do() {
-              $foreign.save(ctx)();
-              var v = action();
-              $foreign.restore(ctx)();
-              return v;
-          };
-      };
-  };
-  var strokePath = function (ctx) {
-      return function (path) {
-          return function __do() {
-              $foreign.beginPath(ctx)();
-              var v = path();
-              $foreign.stroke(ctx)();
-              return v;
-          };
-      };
-  };
   var getCanvasElementById = function (elId) {
       return $foreign.getCanvasElementByIdImpl(elId, Data_Maybe.Just.create, Data_Maybe.Nothing.value);
   };
@@ -1605,39 +1215,10 @@ var PS = {};
           };
       };
   };
-  var fillPath = function (ctx) {
-      return function (path) {
-          return function __do() {
-              $foreign.beginPath(ctx)();
-              var v = path();
-              $foreign.fill(ctx)();
-              return v;
-          };
-      };
-  };
-  exports["withContext"] = withContext;
-  exports["fillPath"] = fillPath;
-  exports["strokePath"] = strokePath;
   exports["getCanvasDimensions"] = getCanvasDimensions;
   exports["getCanvasElementById"] = getCanvasElementById;
-  exports["fillText"] = $foreign.fillText;
-  exports["setFont"] = $foreign.setFont;
-  exports["translate"] = $foreign.translate;
-  exports["rotate"] = $foreign.rotate;
-  exports["scale"] = $foreign.scale;
-  exports["rect"] = $foreign.rect;
-  exports["arc"] = $foreign.arc;
-  exports["closePath"] = $foreign.closePath;
-  exports["moveTo"] = $foreign.moveTo;
-  exports["lineTo"] = $foreign.lineTo;
-  exports["clip"] = $foreign.clip;
-  exports["setShadowColor"] = $foreign.setShadowColor;
-  exports["setShadowOffsetY"] = $foreign.setShadowOffsetY;
-  exports["setShadowOffsetX"] = $foreign.setShadowOffsetX;
-  exports["setShadowBlur"] = $foreign.setShadowBlur;
-  exports["setStrokeStyle"] = $foreign.setStrokeStyle;
+  exports["fillRect"] = $foreign.fillRect;
   exports["setFillStyle"] = $foreign.setFillStyle;
-  exports["setLineWidth"] = $foreign.setLineWidth;
   exports["setCanvasHeight"] = $foreign.setCanvasHeight;
   exports["setCanvasWidth"] = $foreign.setCanvasWidth;
   exports["getContext2D"] = $foreign.getContext2D;
@@ -1646,375 +1227,18 @@ var PS = {};
   // Generated by psc version 0.8.5.0
   "use strict";
   var Prelude = PS["Prelude"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Data_Foldable = PS["Data.Foldable"];
-  var Control_Alt = PS["Control.Alt"];
-  var optionsString = function (v) {
-      return Data_Foldable.intercalate(Data_Foldable.foldableArray)(Data_Monoid.monoidString)(" ")([ Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)(v.style), Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)(v.variant), Data_Foldable.fold(Data_Foldable.foldableMaybe)(Data_Monoid.monoidString)(v.weight) ]);
-  };
-  var fontString = function (v) {
-      return optionsString(v.value2) + (" " + (Prelude.show(Prelude.showInt)(v.value1) + ("px " + v.value0)));
-  };
-  exports["fontString"] = fontString;
-})(PS["Graphics.Drawing.Font"] = PS["Graphics.Drawing.Font"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];
-  var Data_List = PS["Data.List"];
-  var Data_Maybe = PS["Data.Maybe"];
-  var Data_Monoid = PS["Data.Monoid"];
-  var Data_Foldable = PS["Data.Foldable"];
-  var Control_Alt = PS["Control.Alt"];
-  var Control_Monad = PS["Control.Monad"];
   var Control_Monad_Eff = PS["Control.Monad.Eff"];
-  var Graphics_Canvas = PS["Graphics.Canvas"];
-  var Color = PS["Color"];
-  var Graphics_Drawing_Font = PS["Graphics.Drawing.Font"];
-  var $$Math = PS["Math"];
-  var Path = (function () {
-      function Path(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Path.create = function (value0) {
-          return function (value1) {
-              return new Path(value0, value1);
-          };
-      };
-      return Path;
-  })();
-  var Rectangle = (function () {
-      function Rectangle(value0) {
-          this.value0 = value0;
-      };
-      Rectangle.create = function (value0) {
-          return new Rectangle(value0);
-      };
-      return Rectangle;
-  })();
-  var Circle = (function () {
-      function Circle(value0) {
-          this.value0 = value0;
-      };
-      Circle.create = function (value0) {
-          return new Circle(value0);
-      };
-      return Circle;
-  })();
-  var Composite = (function () {
-      function Composite(value0) {
-          this.value0 = value0;
-      };
-      Composite.create = function (value0) {
-          return new Composite(value0);
-      };
-      return Composite;
-  })();
-  var Fill = (function () {
-      function Fill(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Fill.create = function (value0) {
-          return function (value1) {
-              return new Fill(value0, value1);
-          };
-      };
-      return Fill;
-  })();
-  var Outline = (function () {
-      function Outline(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Outline.create = function (value0) {
-          return function (value1) {
-              return new Outline(value0, value1);
-          };
-      };
-      return Outline;
-  })();
-  var Text = (function () {
-      function Text(value0, value1, value2, value3, value4) {
-          this.value0 = value0;
-          this.value1 = value1;
-          this.value2 = value2;
-          this.value3 = value3;
-          this.value4 = value4;
-      };
-      Text.create = function (value0) {
-          return function (value1) {
-              return function (value2) {
-                  return function (value3) {
-                      return function (value4) {
-                          return new Text(value0, value1, value2, value3, value4);
-                      };
-                  };
-              };
-          };
-      };
-      return Text;
-  })();
-  var Many = (function () {
-      function Many(value0) {
-          this.value0 = value0;
-      };
-      Many.create = function (value0) {
-          return new Many(value0);
-      };
-      return Many;
-  })();
-  var Scale = (function () {
-      function Scale(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Scale.create = function (value0) {
-          return function (value1) {
-              return new Scale(value0, value1);
-          };
-      };
-      return Scale;
-  })();
-  var Translate = (function () {
-      function Translate(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Translate.create = function (value0) {
-          return function (value1) {
-              return new Translate(value0, value1);
-          };
-      };
-      return Translate;
-  })();
-  var Rotate = (function () {
-      function Rotate(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Rotate.create = function (value0) {
-          return function (value1) {
-              return new Rotate(value0, value1);
-          };
-      };
-      return Rotate;
-  })();
-  var Clipped = (function () {
-      function Clipped(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      Clipped.create = function (value0) {
-          return function (value1) {
-              return new Clipped(value0, value1);
-          };
-      };
-      return Clipped;
-  })();
-  var WithShadow = (function () {
-      function WithShadow(value0, value1) {
-          this.value0 = value0;
-          this.value1 = value1;
-      };
-      WithShadow.create = function (value0) {
-          return function (value1) {
-              return new WithShadow(value0, value1);
-          };
-      };
-      return WithShadow;
-  })();
-  var translate = function (tx) {
-      return function (ty) {
-          return Translate.create({
-              translateX: tx, 
-              translateY: ty
-          });
-      };
-  }; 
-  var scale = function (sx) {
-      return function (sy) {
-          return Scale.create({
-              scaleX: sx, 
-              scaleY: sy
-          });
-      };
-  };
-  var rotate = Rotate.create;
-  var render = function (ctx) {
-      var renderShape = function (v) {
-          if (v instanceof Path && v.value1 instanceof Data_List.Nil) {
-              return Prelude["return"](Control_Monad_Eff.applicativeEff)(Prelude.unit);
-          };
-          if (v instanceof Path && v.value1 instanceof Data_List.Cons) {
-              return function __do() {
-                  Graphics_Canvas.moveTo(ctx)(v.value1.value0.x)(v.value1.value0.y)();
-                  Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_List.foldableList)(v.value1.value1)(function (p1) {
-                      return Graphics_Canvas.lineTo(ctx)(p1.x)(p1.y);
-                  })();
-                  return Control_Monad.when(Control_Monad_Eff.monadEff)(v.value0)(Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.closePath(ctx)))();
-              };
-          };
-          if (v instanceof Rectangle) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.rect(ctx)(v.value0));
-          };
-          if (v instanceof Circle) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.arc(ctx)({
-                  x: v.value0.x, 
-                  y: v.value0.y, 
-                  r: v.value0.r, 
-                  start: 0.0, 
-                  end: $$Math.pi * 2.0
-              }));
-          };
-          if (v instanceof Composite) {
-              return Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_List.foldableList)(v.value0)(renderShape);
-          };
-          throw new Error("Failed pattern match at Graphics.Drawing line 312, column 3 - line 313, column 3: " + [ v.constructor.name ]);
-      };
-      var applyShadow = function (v) {
-          return function __do() {
-              Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.color)(function (color) {
-                  return Graphics_Canvas.setShadowColor(Color.cssStringHSLA(color))(ctx);
-              })();
-              Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.blur)(function (blur) {
-                  return Graphics_Canvas.setShadowBlur(blur)(ctx);
-              })();
-              return Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.offset)(function (offset) {
-                  return function __do() {
-                      Graphics_Canvas.setShadowOffsetX(offset.x)(ctx)();
-                      return Graphics_Canvas.setShadowOffsetY(offset.y)(ctx)();
-                  };
-              })();
-          };
-      };
-      var applyOutlineStyle = function (v) {
-          return function __do() {
-              Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.color)(function (color) {
-                  return Graphics_Canvas.setStrokeStyle(Color.cssStringHSLA(color))(ctx);
-              })();
-              return Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.lineWidth)(function (width) {
-                  return Graphics_Canvas.setLineWidth(width)(ctx);
-              })();
-          };
-      };
-      var applyFillStyle = function (v) {
-          return Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_Foldable.foldableMaybe)(v.color)(function (color) {
-              return Graphics_Canvas.setFillStyle(Color.cssStringHSLA(color))(ctx);
-          });
-      };
-      var go = function (v) {
-          if (v instanceof Fill) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  applyFillStyle(v.value1)();
-                  return Graphics_Canvas.fillPath(ctx)(renderShape(v.value0))();
-              }));
-          };
-          if (v instanceof Outline) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  applyOutlineStyle(v.value1)();
-                  return Graphics_Canvas.strokePath(ctx)(renderShape(v.value0))();
-              }));
-          };
-          if (v instanceof Many) {
-              return Data_Foldable.for_(Control_Monad_Eff.applicativeEff)(Data_List.foldableList)(v.value0)(go);
-          };
-          if (v instanceof Scale) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  Graphics_Canvas.scale(v.value0)(ctx)();
-                  return go(v.value1)();
-              }));
-          };
-          if (v instanceof Translate) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  Graphics_Canvas.translate(v.value0)(ctx)();
-                  return go(v.value1)();
-              }));
-          };
-          if (v instanceof Rotate) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  Graphics_Canvas.rotate(v.value0)(ctx)();
-                  return go(v.value1)();
-              }));
-          };
-          if (v instanceof Clipped) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  renderShape(v.value0)();
-                  Graphics_Canvas.clip(ctx)();
-                  return go(v.value1)();
-              }));
-          };
-          if (v instanceof WithShadow) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  applyShadow(v.value0)();
-                  return go(v.value1)();
-              }));
-          };
-          if (v instanceof Text) {
-              return Prelude["void"](Control_Monad_Eff.functorEff)(Graphics_Canvas.withContext(ctx)(function __do() {
-                  Graphics_Canvas.setFont(Graphics_Drawing_Font.fontString(v.value0))(ctx)();
-                  applyFillStyle(v.value3)();
-                  return Graphics_Canvas.fillText(ctx)(v.value4)(v.value1)(v.value2)();
-              }));
-          };
-          throw new Error("Failed pattern match at Graphics.Drawing line 262, column 1 - line 319, column 40: " + [ v.constructor.name ]);
-      };
-      return go;
-  };
-  var rectangle = function (x) {
-      return function (y) {
-          return function (w) {
-              return function (h) {
-                  return new Rectangle({
-                      x: x, 
-                      y: y, 
-                      w: w, 
-                      h: h
-                  });
-              };
-          };
-      };
-  };                                                     
-  var lineWidth = function (c) {
-      return {
-          color: Data_Maybe.Nothing.value, 
-          lineWidth: new Data_Maybe.Just(c)
-      };
-  };
-  var filled = Prelude.flip(Fill.create);
-  var fillColor = function (c) {
-      return {
-          color: new Data_Maybe.Just(c)
-      };
-  };
-  exports["render"] = render;
-  exports["rotate"] = rotate;
-  exports["translate"] = translate;
-  exports["scale"] = scale;
-  exports["filled"] = filled;
-  exports["lineWidth"] = lineWidth;
-  exports["fillColor"] = fillColor;
-  exports["rectangle"] = rectangle;
-})(PS["Graphics.Drawing"] = PS["Graphics.Drawing"] || {});
-(function(exports) {
-  // Generated by psc version 0.8.5.0
-  "use strict";
-  var Prelude = PS["Prelude"];
+  var Data_Array = PS["Data.Array"];
   var Data_Int = PS["Data.Int"];
   var Data_Maybe = PS["Data.Maybe"];
-  var Control_Monad_Eff = PS["Control.Monad.Eff"];
-  var Graphics_Drawing = PS["Graphics.Drawing"];
-  var Control_Monad_Eff_Random = PS["Control.Monad.Eff.Random"];
-  var Color = PS["Color"];
-  var Control_Monad_Eff_Unsafe = PS["Control.Monad.Eff.Unsafe"];
-  var DOM_HTML = PS["DOM.HTML"];
-  var DOM_HTML_Window = PS["DOM.HTML.Window"];
-  var DOM_RequestAnimationFrame = PS["DOM.RequestAnimationFrame"];
-  var Data_Array = PS["Data.Array"];
   var Data_Tuple = PS["Data.Tuple"];
-  var Graphics_Canvas = PS["Graphics.Canvas"];        
+  var Color = PS["Color"];
+  var Control_Monad_Eff_Random = PS["Control.Monad.Eff.Random"];
+  var Control_Monad_Eff_Unsafe = PS["Control.Monad.Eff.Unsafe"];
+  var Graphics_Canvas = PS["Graphics.Canvas"];
+  var DOM_RequestAnimationFrame = PS["DOM.RequestAnimationFrame"];
+  var DOM_HTML = PS["DOM.HTML"];
+  var DOM_HTML_Window = PS["DOM.HTML.Window"];        
   var Cell = (function () {
       function Cell(value0) {
           this.value0 = value0;
@@ -2029,6 +1253,29 @@ var PS = {};
           return b(a);
       };
   };
+  var diffcells = function (prevcells) {
+      return function (newcells) {
+          var filterpred = function (xn) {
+              return function (yn) {
+                  return function (sn) {
+                      var $15 = Prelude[">>="](Data_Maybe.bindMaybe)(Data_Array.index(prevcells)(Data_Int.round(yn)))(function (row) {
+                          return Data_Array.index(row)(Data_Int.round(xn));
+                      });
+                      if ($15 instanceof Data_Maybe.Nothing) {
+                          return true;
+                      };
+                      if ($15 instanceof Data_Maybe.Just) {
+                          return !($15.value0.value0.x === xn && ($15.value0.value0.y === yn && $15.value0.value0.state === sn));
+                      };
+                      throw new Error("Failed pattern match at Main line 53, column 25 - line 56, column 9: " + [ $15.constructor.name ]);
+                  };
+              };
+          };
+          return $bar$greater($bar$greater(newcells)(Data_Array.concat))(Data_Array.filter(function (v) {
+              return filterpred(v.value0.x)(v.value0.y)(v.value0.state);
+          }));
+      };
+  };
   var colors = 8;
   var evalcell = function (v) {
       return function (prevcells) {
@@ -2041,27 +1288,27 @@ var PS = {};
                       return Data_Array.index(row)(v1[0]);
                   });
               };
-              throw new Error("Failed pattern match at Main line 49, column 73 - line 49, column 125: " + [ v1.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 45, column 84 - line 45, column 158: " + [ v1.constructor.name ]);
           }));
           var innext = $bar$greater(around)(Data_Array.filter(function (v1) {
               return v1.value0.state === nextstate;
           }));
-          var $18 = Data_Array.length(innext) === 0;
-          if ($18) {
+          var $34 = Data_Array.length(innext) === 0;
+          if ($34) {
               return new Cell({
                   state: v.value0.state, 
                   x: v.value0.x, 
                   y: v.value0.y
               });
           };
-          if (!$18) {
+          if (!$34) {
               return new Cell({
                   state: nextstate, 
                   x: v.value0.x, 
                   y: v.value0.y
               });
           };
-          throw new Error("Failed pattern match at Main line 52, column 17 - line 54, column 1: " + [ $18.constructor.name ]);
+          throw new Error("Failed pattern match at Main line 48, column 17 - line 51, column 1: " + [ $34.constructor.name ]);
       };
   };
   var evaluate = function (prevcells) {
@@ -2073,7 +1320,7 @@ var PS = {};
   };
   var makecolor = function (state) {
       var hue = Data_Int.toNumber(state) * (360.0 / Data_Int.toNumber(colors));
-      return Color.hsla(hue)(1.0)(0.5)(0.5);
+      return $bar$greater(Color.hsla(hue)(1.0)(0.5)(0.5))(Color.cssStringRGBA);
   };
   var newcell = function (x) {
       return function (y) {
@@ -2088,16 +1335,16 @@ var PS = {};
       return function (xn) {
           return function (yindex) {
               var prevxn = Data_Array.length(prevrow);
-              var $23 = prevxn >= xn;
-              if ($23) {
+              var $39 = prevxn >= xn;
+              if ($39) {
                   return Data_Array.take(xn)(prevrow);
               };
-              if (!$23) {
+              if (!$39) {
                   return Data_Array.concat([ prevrow, $bar$greater(Data_Array[".."](prevxn)(xn))(Prelude.map(Prelude.functorArray)(function (x) {
                       return newcell(x)(yindex);
                   })) ]);
               };
-              throw new Error("Failed pattern match at Main line 42, column 17 - line 43, column 1: " + [ $23.constructor.name ]);
+              throw new Error("Failed pattern match at Main line 36, column 17 - line 39, column 1: " + [ $39.constructor.name ]);
           };
       };
   };
@@ -2106,16 +1353,16 @@ var PS = {};
           return function (yn) {
               var prevyn = Data_Array.length(prevcells);
               return $bar$greater($bar$greater((function () {
-                  var $24 = prevyn >= yn;
-                  if ($24) {
+                  var $40 = prevyn >= yn;
+                  if ($40) {
                       return Data_Array.take(yn)(prevcells);
                   };
-                  if (!$24) {
+                  if (!$40) {
                       return Data_Array.concat([ prevcells, $bar$greater(Data_Array[".."](prevyn)(yn))(Prelude.map(Prelude.functorArray)(function (v) {
                           return [  ];
                       })) ]);
                   };
-                  throw new Error("Failed pattern match at Main line 36, column 18 - line 36, column 136: " + [ $24.constructor.name ]);
+                  throw new Error("Failed pattern match at Main line 30, column 18 - line 30, column 136: " + [ $40.constructor.name ]);
               })())(Data_Array.zip(Data_Array[".."](0)(yn))))(Prelude.map(Prelude.functorArray)(function (v) {
                   return claimrow(v.value1)(xn)(v.value0);
               }));
@@ -2123,57 +1370,89 @@ var PS = {};
       };
   };
   var cellsize = 25.0;
-  var drawcells = function (newcells) {
-      return function (ctx) {
-          return Control_Monad_Eff.foreachE(newcells)(function (row) {
-              return Control_Monad_Eff.foreachE(row)(function (v) {
-                  return $bar$greater($bar$greater(Graphics_Drawing.rectangle(v.value0.x * cellsize)(v.value0.y * cellsize)(cellsize)(cellsize))(Graphics_Drawing.filled($bar$greater($bar$greater(v.value0.state)(makecolor))(Graphics_Drawing.fillColor))))(Graphics_Drawing.render(ctx));
+  var drawcells = function (ctx) {
+      return function (newcells) {
+          var groupedcells = $bar$greater(newcells)(Data_Array.groupBy(function (v) {
+              return function (v1) {
+                  return v.value0.state === v1.value0.state;
+              };
+          }));
+          return Control_Monad_Eff.foreachE(groupedcells)(function (thisgroup) {
+              var $54 = Prelude[">>="](Data_Maybe.bindMaybe)(Data_Array.head(thisgroup))(function (v) {
+                  return $bar$greater(makecolor(v.value0.state))(Prelude["return"](Data_Maybe.applicativeMaybe));
               });
+              if ($54 instanceof Data_Maybe.Nothing) {
+                  return Prelude["return"](Control_Monad_Eff.applicativeEff)(Prelude.unit);
+              };
+              if ($54 instanceof Data_Maybe.Just) {
+                  return function __do() {
+                      var v = Graphics_Canvas.setFillStyle($54.value0)(ctx)();
+                      return Control_Monad_Eff.foreachE(thisgroup)(function (v1) {
+                          return function __do() {
+                              Graphics_Canvas.fillRect(v)({
+                                  x: v1.value0.x * cellsize, 
+                                  y: v1.value0.y * cellsize, 
+                                  w: cellsize, 
+                                  h: cellsize
+                              })();
+                              return Prelude.unit;
+                          };
+                      })();
+                  };
+              };
+              throw new Error("Failed pattern match at Main line 64, column 25 - line 73, column 1: " + [ $54.constructor.name ]);
           });
       };
   };
   var loop = function (prevcells) {
-      return DOM_RequestAnimationFrame.requestAnimationFrame(function __do() {
-          var v = Graphics_Canvas.getCanvasElementById("canvas")();
-          if (v instanceof Data_Maybe.Just) {
-              var v1 = Graphics_Canvas.getContext2D(v.value0)();
-              var v2 = Graphics_Canvas.getCanvasDimensions(v.value0)();
-              (function __do() {
-                  var n = Prelude[">>="](Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.innerWidth)();
-                  var n1 = Data_Int.toNumber(n);
-                  var $37 = n1 !== v2.width;
-                  if ($37) {
-                      return Graphics_Canvas.setCanvasWidth(n1)(v.value0)();
-                  };
-                  if (!$37) {
-                      return v.value0;
-                  };
-                  throw new Error("Failed pattern match at Main line 65, column 79 - line 66, column 17: " + [ $37.constructor.name ]);
-              })();
-              (function __do() {
-                  var n = Prelude[">>="](Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.innerHeight)();
-                  var n1 = Data_Int.toNumber(n);
-                  var $38 = n1 !== v2.height;
-                  if ($38) {
-                      return Graphics_Canvas.setCanvasHeight(n1)(v.value0)();
-                  };
-                  if (!$38) {
-                      return v.value0;
-                  };
-                  throw new Error("Failed pattern match at Main line 66, column 80 - line 67, column 17: " + [ $38.constructor.name ]);
-              })();
-              var v3 = $bar$greater($bar$greater(claimcells(prevcells)(1 + Data_Int.round(v2.width / cellsize) | 0)(1 + Data_Int.round(v2.height / cellsize) | 0))(evaluate))(Prelude["return"](Control_Monad_Eff.applicativeEff))();
-              drawcells(v3)(v1)();
-              return loop(v3)();
+      return function (canvas) {
+          return function (ctx) {
+              return DOM_RequestAnimationFrame.requestAnimationFrame(function __do() {
+                  var v = Graphics_Canvas.getCanvasDimensions(canvas)();
+                  (function __do() {
+                      var n = Prelude[">>="](Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.innerWidth)();
+                      var n1 = Data_Int.toNumber(n);
+                      var $62 = n1 !== v.width;
+                      if ($62) {
+                          return Graphics_Canvas.setCanvasWidth(n1)(canvas)();
+                      };
+                      if (!$62) {
+                          return canvas;
+                      };
+                      throw new Error("Failed pattern match at Main line 76, column 104 - line 77, column 17: " + [ $62.constructor.name ]);
+                  })();
+                  (function __do() {
+                      var n = Prelude[">>="](Control_Monad_Eff.bindEff)(DOM_HTML.window)(DOM_HTML_Window.innerHeight)();
+                      var n1 = Data_Int.toNumber(n);
+                      var $63 = n1 !== v.height;
+                      if ($63) {
+                          return Graphics_Canvas.setCanvasHeight(n1)(canvas)();
+                      };
+                      if (!$63) {
+                          return canvas;
+                      };
+                      throw new Error("Failed pattern match at Main line 77, column 105 - line 78, column 17: " + [ $63.constructor.name ]);
+                  })();
+                  var v1 = $bar$greater($bar$greater(claimcells(prevcells)(1 + Data_Int.round(v.width / cellsize) | 0)(1 + Data_Int.round(v.height / cellsize) | 0))(evaluate))(Prelude["return"](Control_Monad_Eff.applicativeEff))();
+                  $bar$greater($bar$greater(v1)(diffcells(prevcells)))(drawcells(ctx))();
+                  return loop(v1)(canvas)(ctx)();
+              });
           };
-          throw new Error("Failed pattern match at Main line 61, column 9 - line 72, column 1: " + [ v.constructor.name ]);
-      });
+      };
   };
-  var main = loop([  ]);
+  var main = function __do() {
+      var v = Graphics_Canvas.getCanvasElementById("canvas")();
+      if (v instanceof Data_Maybe.Just) {
+          var v1 = Graphics_Canvas.getContext2D(v.value0)();
+          return loop([  ])(v.value0)(v1)();
+      };
+      throw new Error("Failed pattern match at Main line 84, column 8 - line 87, column 24: " + [ v.constructor.name ]);
+  };
   exports["Cell"] = Cell;
   exports["main"] = main;
   exports["loop"] = loop;
   exports["drawcells"] = drawcells;
+  exports["diffcells"] = diffcells;
   exports["evalcell"] = evalcell;
   exports["evaluate"] = evaluate;
   exports["claimrow"] = claimrow;
